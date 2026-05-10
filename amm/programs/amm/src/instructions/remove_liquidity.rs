@@ -97,8 +97,16 @@ pub fn remove_liquidity(
     amount_a = shares / supply * pool_a_amount
     amount_b = shares / supply * pool_b_amount
     */
-    let amount_a = shares / ctx.accounts.mint_pool.supply * ctx.accounts.pool_a.amount;
-    let amount_b = shares / ctx.accounts.mint_pool.supply * ctx.accounts.pool_b.amount;
+    let amount_a = shares
+        .checked_mul(ctx.accounts.pool_a.amount)
+        .unwrap()
+        .checked_div(ctx.accounts.mint_pool.supply)
+        .unwrap();
+    let amount_b = shares
+        .checked_mul(ctx.accounts.pool_b.amount)
+        .unwrap()
+        .checked_div(ctx.accounts.mint_pool.supply)
+        .unwrap();
 
     // Check amount_a >= min_amount_a
     // Check amount_b >= min_amount_b

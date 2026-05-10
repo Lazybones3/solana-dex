@@ -74,7 +74,11 @@ pub fn swap(
     // Calculate amount out with fee
     // amount_out = amount_in * (1 - fee)
     let mut amount_out = amount_in;
-    let amount_out_fee = amount_out * fee as u64 / constants::MAX_POOL_FEE as u64;
+    let amount_out_fee = amount_out
+        .checked_mul(fee as u64)
+        .unwrap()
+        .checked_div(constants::MAX_POOL_FEE as u64)
+        .unwrap();
     amount_out -= amount_out_fee;
 
     // Check amount_out >= min_amount_out

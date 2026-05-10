@@ -1,13 +1,9 @@
-use anchor_client::solana_sdk::signature::Signer;
-use anchor_client::{
-    solana_sdk::{
-        commitment_config::CommitmentConfig, pubkey::Pubkey, signature::Keypair,
-    },
-    Client, Cluster, Program,
-};
-use anchor_spl::associated_token::{
-    get_associated_token_address, spl_associated_token_account,
-};
+use anchor_client::Signer;
+use anchor_client::{Client, Cluster, Program};
+use solana_commitment_config::CommitmentConfig;
+use solana_keypair::Keypair;
+use solana_pubkey::Pubkey;
+use anchor_spl::associated_token::{self, get_associated_token_address};
 use anchor_spl::token::{self};
 
 use super::token_helper;

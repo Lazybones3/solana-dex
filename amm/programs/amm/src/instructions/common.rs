@@ -16,7 +16,7 @@ pub fn transfer<'info>(
 ) -> Result<()> {
     token::transfer(
         CpiContext::new(
-            token_program.to_account_info(),
+            token_program.key(),
             Transfer {
                 from: src.to_account_info(),
                 to: dst.to_account_info(),
@@ -37,7 +37,7 @@ pub fn transfer_from_pool<'info>(
 ) -> Result<()> {
     token::transfer(
         CpiContext::new_with_signer(
-            token_program.to_account_info(),
+            token_program.key(),
             Transfer {
                 from: pool.to_account_info(),
                 to: dst.to_account_info(),
@@ -59,7 +59,7 @@ pub fn mint<'info>(
 ) -> Result<()> {
     token::mint_to(
         CpiContext::new_with_signer(
-            token_program.to_account_info(),
+            token_program.key(),
             MintTo {
                 mint: mint.to_account_info(),
                 to: dst.to_account_info(),
@@ -80,7 +80,7 @@ pub fn burn<'info>(
 ) -> Result<()> {
     token::burn(
         CpiContext::new(
-            token_program.to_account_info(),
+            token_program.key(),
             Burn {
                 mint: mint.to_account_info(),
                 from: src.to_account_info(),

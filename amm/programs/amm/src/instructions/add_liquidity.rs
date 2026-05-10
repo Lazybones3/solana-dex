@@ -94,12 +94,16 @@ pub fn add_liquidity(
     user shares = user_liquidity / pool_liquidity * supply
     user_liquidity = amount_a + amount_b
     */
-    let user_liquidity = amount_a + amount_b;
-    let pool_liquidity = ctx.accounts.pool_a.amount + ctx.accounts.pool_b.amount;
+    let user_liquidity = amount_a.checked_add(amount_b).unwrap();
+    let pool_liquidity = ctx.accounts.pool_a.amount
+        .checked_add(ctx.accounts.pool_b.amount).unwrap();
     let supply = ctx.accounts.mint_pool.supply;
     msg!("mint_pool supply is {}", supply);
     let shares = if pool_liquidity > 0 {
-        user_liquidity * supply / pool_liquidity
+        user_liquidity.checked_mul(supply)
+            .unwrap()
+            .checked_div(pool_liquidity)
+            .unwrap()
     } else {
         user_liquidity
     };

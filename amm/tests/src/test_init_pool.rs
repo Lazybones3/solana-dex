@@ -1,6 +1,7 @@
-use anchor_client::solana_sdk::signature::Signer;
-use anchor_client::solana_sdk::{signature::read_keypair_file, system_program};
-use anchor_spl::associated_token::spl_associated_token_account;
+use anchor_client::Signer;
+use solana_keypair::read_keypair_file;
+use solana_system_interface::program as system_program;
+use anchor_spl::associated_token;
 use anchor_spl::token::{self};
 
 use super::test_helper;
@@ -41,7 +42,7 @@ fn test_init() {
             pool_b,
             mint_pool: mint_pool_pda,
             token_program: token::ID,
-            associated_token_program: spl_associated_token_account::ID,
+            associated_token_program: associated_token::ID,
             system_program: system_program::ID,
         })
         .signer(&users[0])

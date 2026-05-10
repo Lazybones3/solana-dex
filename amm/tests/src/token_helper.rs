@@ -1,9 +1,11 @@
-use anchor_client::{
-    Program, anchor_lang::prelude::program_pack::Pack, solana_sdk::{
-        pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
-        transaction::Transaction,
-    }
-};
+use anchor_client::Program;
+use solana_program_pack::Pack;
+use solana_pubkey::Pubkey;
+use solana_keypair::Keypair;
+use anchor_client::Signer;
+use solana_instruction::Instruction;
+use solana_transaction::Transaction;
+use solana_system_interface::instruction as system_instruction;
 use anchor_spl::associated_token::{self, get_associated_token_address};
 use anchor_spl::token::{self, spl_token};
 

@@ -5,6 +5,14 @@ description = "Created with Anchor"
 edition = "2021"
 
 [dependencies]
-anchor-client = "0.32.1"
-anchor-spl = { version = "0.32.1", features = ["default"] }
+anchor-client = "1.0.2"
+anchor-spl = { version = "1.0.2", features = ["default"] }
+anchor-lang = "1.0.2"
+solana-program-pack = "3.1.0"
 amm = { version = "0.1.0", path = "../programs/amm" }
+solana-keypair = "3.1.2"
+solana-pubkey = "4.2.0"
+solana-commitment-config = "3.1.1"
+solana-transaction = "3.1.0"
+solana-instruction = "3.1.0"
+solana-system-interface = "3.1.0"
