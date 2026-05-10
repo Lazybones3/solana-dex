@@ -6,23 +6,28 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
-import { sendSwap } from "@/lib/amm-client";
-import { tokenList } from "@/lib/constants";
+import { getPayerBalance, getWalletInfo, sendSwap } from "@/lib/amm-client";
+import { defaultFee, tokenList } from "@/lib/constants";
 import { AnchorProvider } from "@coral-xyz/anchor";
 import { useAnchorWallet, useConnection } from "@solana/wallet-adapter-react";
 import { ArrowDown } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Token } from "@/types/token";
 
 type SwapSectionProps = {
   label: string;
   selectedToken: Token;
-  balance: string;
+  balance: number;
   onTokenChange: (token: Token) => void;
   options: typeof tokenList;
   amount: number;
   onAmountChange: (amount: number) => void;
+};
+
+type WalletBalance = {
+  balanceA: number;
+  balanceB: number;
 };
 
 function SwapSection({
@@ -88,6 +93,10 @@ export default function SwapPage() {
   const [buyAmount, setBuyAmount] = useState<number>(0);
   const [sellToken, setSellToken] = useState<Token>(tokenList[0]);
   const [buyToken, setBuyToken] = useState<Token>(tokenList[1]);
+  const [walletBalance, setWalletBalance] = useState<WalletBalance>({
+    balanceA: 0,
+    balanceB: 0,
+  });
 
   const sellOptions = tokenList.filter(
     (token) => token.symbol !== buyToken.symbol,
@@ -117,13 +126,13 @@ export default function SwapPage() {
     }
 
     try {
-      const signature = await sendSwap(provider, wallet.publicKey, {
+      await sendSwap(provider, wallet.publicKey, {
         aForB: true,
         amountIn: sellAmount.toString(),
         minAmountOut: buyAmount.toString(),
         mintA: sellToken.mint!,
         mintB: buyToken.mint!,
-        fee: "10",
+        fee: defaultFee.toString(),
       });
       toast.success("Swap successful!");
     } catch (error) {
@@ -133,12 +142,30 @@ export default function SwapPage() {
     }
   };
 
-  const handleSwitchTokens = () => {
+  const handleSwitchTokens = async() => {
     setSellToken(buyToken);
     setBuyToken(sellToken);
     setSellAmount(buyAmount);
     setBuyAmount(sellAmount);
+    await loadWallet();
   };
+
+  const loadWallet = async () => {
+    if (!provider || !wallet) {
+      return;
+    }
+    const sellBalance = await getPayerBalance(provider, wallet.publicKey, sellToken.mint!);
+    const buyBalance = await getPayerBalance(provider, wallet.publicKey, buyToken.mint!);
+
+    setWalletBalance({
+      balanceA: Number(sellBalance),
+      balanceB: Number(buyBalance),
+    });
+  }
+
+  useEffect(() => {
+    loadWallet();
+  }, [provider, wallet, sellToken, buyToken]);
 
   return (
     <Card className="mx-auto w-full max-w-xl rounded-[32px] py-0">
@@ -148,7 +175,7 @@ export default function SwapPage() {
             <SwapSection
               label="Sell"
               selectedToken={sellToken}
-              balance="0"
+              balance={walletBalance.balanceA}
               onTokenChange={setSellToken}
               options={sellOptions}
               amount={sellAmount}
@@ -157,7 +184,7 @@ export default function SwapPage() {
             <SwapSection
               label="Buy"
               selectedToken={buyToken}
-              balance="0"
+              balance={walletBalance.balanceB}
               onTokenChange={setBuyToken}
               options={buyOptions}
               amount={buyAmount}

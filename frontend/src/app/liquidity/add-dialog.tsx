@@ -53,7 +53,7 @@ export default function AddLiquidityDialog({
 
     try {
       setIsSubmitting(true);
-      const is_pool_exist = await checkPoolExist(provider, wallet.publicKey, {
+      const is_pool_exist = await checkPoolExist(provider, {
         mintA: sellToken.mint,
         mintB: buyToken.mint,
         fee: defaultFee.toString(),

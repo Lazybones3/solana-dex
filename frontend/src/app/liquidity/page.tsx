@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { getWalletLiquidity } from "@/lib/amm-client";
+import { getWalletInfo } from "@/lib/amm-client";
 import { useAnchorWallet, useConnection } from "@solana/wallet-adapter-react";
 import { AnchorProvider } from "@coral-xyz/anchor";
 import { defaultFee, tokenList } from "@/lib/constants";
@@ -57,7 +57,7 @@ export default function LiquidityPage() {
     }
 
     try {
-      const liquidity = await getWalletLiquidity(provider, wallet.publicKey, {
+      const liquidity = await getWalletInfo(provider, wallet.publicKey, {
         mintA: sellToken.mint,
         mintB: buyToken.mint,
         fee: defaultFee.toString(),

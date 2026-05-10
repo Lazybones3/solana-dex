@@ -7,7 +7,7 @@ import {
   getMint,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
 
 import ammIdl from "@/idl/amm.json";
 
@@ -63,19 +63,19 @@ type AnchorMethodBuilder = {
 
 type AnchorMethods = Record<string, (...args: unknown[]) => AnchorMethodBuilder>;
 
-export function parsePublicKey(value: string, label: string) {
+export function parsePublicKey(value: string) {
   try {
     return new PublicKey(value.trim());
   } catch {
-    throw new Error(`${label} must be a valid Solana public key.`);
+    throw new Error(`${value} is not a valid Solana public key.`);
   }
 }
 
-export function parseU16(value: string, label = "Fee") {
+export function parseU16(value: string) {
   const parsed = Number(value);
 
   if (!Number.isInteger(parsed) || parsed < 0 || parsed > 65535) {
-    throw new Error(`${label} must be an integer from 0 to 65535.`);
+    throw new Error(`${value} must be an integer from 0 to 65535.`);
   }
 
   return parsed;
@@ -96,8 +96,8 @@ export function createAmmProgram(provider: AnchorProvider) {
 }
 
 export function deriveAmmAccounts(input: AmmPoolInput, payer: PublicKey): AmmAccounts {
-  const mintA = parsePublicKey(input.mintA, "Mint A");
-  const mintB = parsePublicKey(input.mintB, "Mint B");
+  const mintA = parsePublicKey(input.mintA);
+  const mintB = parsePublicKey(input.mintB);
   const fee = parseU16(input.fee);
   const feeSeed = new Uint8Array([fee & 0xff, (fee >> 8) & 0xff]);
 
@@ -221,16 +221,24 @@ export async function initPool(
 
 export async function checkPoolExist(
   provider: AnchorProvider,
-  payer: PublicKey,
   input: AmmPoolInput
 ) {
-  const { pool } = deriveAmmAccounts(input, payer);
+  const mintA = parsePublicKey(input.mintA);
+  const mintB = parsePublicKey(input.mintB);
+  const fee = parseU16(input.fee);
+  const feeSeed = new Uint8Array([fee & 0xff, (fee >> 8) & 0xff]);
+
+  // pool account
+  const [pool] = PublicKey.findProgramAddressSync(
+    [POOL_AUTH_SEED, mintA.toBuffer(), mintB.toBuffer(), feeSeed],
+    AMM_PROGRAM_ID
+  );
   const accountInfo = await provider.connection.getAccountInfo(pool);
 
   return accountInfo !== null;
 }
 
-export async function getWalletLiquidity(
+export async function getWalletInfo(
   provider: AnchorProvider,
   payer: PublicKey,
   input: {
@@ -239,33 +247,76 @@ export async function getWalletLiquidity(
     fee: string;
   }
 ) {
-  const accounts = deriveAmmAccounts(input, payer);
+  const mintA = parsePublicKey(input.mintA);
+  const mintB = parsePublicKey(input.mintB);
+  const fee = parseU16(input.fee);
+  const feeSeed = new Uint8Array([fee & 0xff, (fee >> 8) & 0xff]);
+
   const connection = provider.connection;
 
-  const [lpAccount, poolAAccount, poolBAccount, lpMint] = await Promise.all([
-    getAccount(connection, accounts.payerLiquidity),
-    getAccount(connection, accounts.poolA),
-    getAccount(connection, accounts.poolB),
-    getMint(connection, accounts.mintPool),
-  ]);
+  // mint pool
+  const [mintPool] = PublicKey.findProgramAddressSync(
+    [POOL_MINT_SEED, mintA.toBuffer(), mintB.toBuffer(), feeSeed],
+    AMM_PROGRAM_ID
+  );
+  const lpMint = await getMint(connection, mintPool);
+
+  // pool account
+  const [pool] = PublicKey.findProgramAddressSync(
+    [POOL_AUTH_SEED, mintA.toBuffer(), mintB.toBuffer(), feeSeed],
+    AMM_PROGRAM_ID
+  );
+
+  // pool a token account
+  const poolA = getAssociatedTokenAddressSync(mintA, pool, true);
+  const poolAAccount = await getAccount(connection, poolA);
+
+  // pool b token account
+  const poolB = getAssociatedTokenAddressSync(mintB, pool, true);
+  const poolBAccount = await getAccount(connection, poolB);
+
+  // lp token account
+  const payerLiquidity = getAssociatedTokenAddressSync(mintPool, payer);
+  const lpAccount = await getAccount(connection, payerLiquidity);
 
   const userLpShares = lpAccount.amount;
   const totalLpSupply = lpMint.supply;
   const poolAmountA = poolAAccount.amount;
   const poolAmountB = poolBAccount.amount;
 
-  // const amountA =
-  //   totalLpSupply === BigInt(0) ? BigInt(0) : (poolAmountA * userLpShares) / totalLpSupply;
+  const amountA =
+    totalLpSupply === BigInt(0) ? BigInt(0) : (poolAmountA * userLpShares) / totalLpSupply;
 
-  // const amountB =
-  //   totalLpSupply === BigInt(0) ? BigInt(0) : (poolAmountB * userLpShares) / totalLpSupply;
+  const amountB =
+    totalLpSupply === BigInt(0) ? BigInt(0) : (poolAmountB * userLpShares) / totalLpSupply;
 
   return {
-    lpTokenAccount: accounts.payerLiquidity.toBase58(),
-    mintPool: accounts.mintPool.toBase58(),
     shares: userLpShares.toString(),
     totalSupply: totalLpSupply.toString(),
-    amountA: poolAmountA.toString(),
-    amountB: poolAmountB.toString(),
+    amountA: amountA.toString(),
+    amountB: amountB.toString(),
   };
+}
+
+export async function getPayerBalance(
+  provider: AnchorProvider,
+  payer: PublicKey,
+  mintAddress: string,
+) {
+  const connection = provider.connection;
+  const mint = parsePublicKey(mintAddress);
+
+  try {
+    // 1. Derive the Associated Token Account (ATA) address for the payer and mint
+    const ata = getAssociatedTokenAddressSync(mint, payer);
+
+    // 2. Fetch the account info for that ATA
+    const accountInfo = await getAccount(connection, ata);
+
+    // 3. Return the amount as a formatted string with 2 decimal places
+    return (Number(accountInfo.amount) / LAMPORTS_PER_SOL).toFixed(2);
+  } catch (e) {
+    // If the account doesn't exist, the balance is 0
+    return 0;
+  }
 }
