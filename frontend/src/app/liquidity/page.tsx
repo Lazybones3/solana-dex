@@ -127,56 +127,58 @@ export default function LiquidityPage() {
   );
 
   return (
-    <div className="flex flex-col gap-6 px-3 py-4 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Liquidity</h1>
+    <div className="flex flex-col gap-4 w-full">
+      <div className="flex items-center justify-between px-1">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Positions</h1>
         <AddLiquidityDialog onSuccess={loadLiquidity} />
       </div>
 
-      <Card>
-        <CardContent className="px-0">
+      <Card className="border-none shadow-lg bg-white dark:bg-slate-950 rounded-[24px] overflow-hidden">
+        <CardContent className="p-0">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Position</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Liquidity</TableHead>
-                <TableHead>Supply</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+            <TableHeader className="bg-slate-50/50 dark:bg-slate-900/50">
+              <TableRow className="hover:bg-transparent border-none">
+                <TableHead className="h-10 text-xs font-bold uppercase tracking-wider text-slate-500">Position</TableHead>
+                <TableHead className="h-10 text-xs font-bold uppercase tracking-wider text-slate-500">Amount</TableHead>
+                <TableHead className="h-10 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
-                    className="text-center py-8 text-muted-foreground"
+                    colSpan={3}
+                    className="text-center py-12 text-muted-foreground border-none"
                   >
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="animate-spin size-4" />
-                      Loading positions...
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Loader2 className="animate-spin size-6 text-primary" />
+                      <span className="text-sm font-medium">Loading your positions...</span>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 <>
                   {paginatedItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">
-                        {item.position}
+                    <TableRow key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 border-slate-100 dark:border-slate-900 transition-colors">
+                      <TableCell className="py-4">
+                        <div className="font-bold text-slate-900 dark:text-slate-100">
+                          {item.position}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5 uppercase">
+                          Liquidity: {item.liquidity}
+                        </div>
                       </TableCell>
-                      <TableCell>
-                        <span className="text-muted-foreground">
-                          {item.amountA}
-                        </span>
-                        <span className="mx-1">/</span>
-                        <span className="text-muted-foreground">
-                          {item.amountB}
-                        </span>
+                      <TableCell className="py-4">
+                        <div className="flex flex-col gap-0.5">
+                          <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {item.amountA} <span className="text-[10px] text-slate-400 ml-1">{item.tokenA.symbol}</span>
+                          </div>
+                          <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {item.amountB} <span className="text-[10px] text-slate-400 ml-1">{item.tokenB.symbol}</span>
+                          </div>
+                        </div>
                       </TableCell>
-                      <TableCell>{item.liquidity}</TableCell>
-                      <TableCell>{item.supply}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="py-4 text-right">
                         <RemoveLiquidityDialog
                           tokenA={item.tokenA}
                           tokenB={item.tokenB}
@@ -189,10 +191,13 @@ export default function LiquidityPage() {
                   {paginatedItems.length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={4}
-                        className="text-center py-8 text-muted-foreground"
+                        colSpan={3}
+                        className="text-center py-12 text-muted-foreground border-none"
                       >
-                        No positions found.
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-sm font-medium">No positions found</span>
+                          <span className="text-xs">Your active liquidity positions will appear here.</span>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
@@ -202,14 +207,15 @@ export default function LiquidityPage() {
           </Table>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-slate-900 bg-slate-50/30 dark:bg-slate-900/30">
+              <span className="text-xs font-medium text-slate-500">
                 Page {page + 1} of {totalPages}
               </span>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  size="icon-sm"
+                  size="icon"
+                  className="size-8 rounded-lg border-slate-200 dark:border-slate-800"
                   onClick={() => setPage((p: number) => Math.max(0, p - 1))}
                   disabled={page === 0}
                 >
@@ -217,7 +223,8 @@ export default function LiquidityPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  size="icon-sm"
+                  size="icon"
+                  className="size-8 rounded-lg border-slate-200 dark:border-slate-800"
                   onClick={() =>
                     setPage((p: number) => Math.min(totalPages - 1, p + 1))
                   }

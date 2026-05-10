@@ -40,31 +40,34 @@ function SwapSection({
   onAmountChange,
 }: SwapSectionProps) {
   return (
-    <div className="rounded-[28px] border border-black/6 bg-[#f7f7f8] px-6 py-6">
-      <label className="text-[1.05rem] font-medium text-slate-700">
-        {label}
-      </label>
+    <div className="rounded-2xl bg-slate-50 dark:bg-slate-900/50 p-4 border border-transparent hover:border-slate-200 dark:hover:border-slate-800 transition-colors">
+      <div className="flex justify-between items-center mb-2">
+        <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          {label}
+        </label>
+        <span className="text-xs text-slate-400 dark:text-slate-500">
+          Balance: {balance} {selectedToken.symbol}
+        </span>
+      </div>
 
-      <div className="mt-3 mb-5 flex items-center gap-4">
-        <div className="min-w-0 flex-1">
-          <input
-            type="number"
-            inputMode="decimal"
-            min="0"
-            className="w-full border-0 bg-transparent text-5xl leading-none font-light tracking-tight text-slate-400 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
-            value={Number(amount)}
-            onChange={(e) => onAmountChange(Number(e.target.value))}
-          />
-        </div>
+      <div className="flex justify-between items-center">
+        <input
+          type="number"
+          inputMode="decimal"
+          min="0"
+          className="flex-1 bg-transparent text-3xl font-semibold outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none placeholder:text-slate-300 dark:placeholder:text-slate-700"
+          placeholder="0"
+          value={amount || ""}
+          onChange={(e) => onAmountChange(Number(e.target.value))}
+        />
 
         <NativeSelect
           value={selectedToken.symbol.toLowerCase()}
-          className="shrink-0 [&_select]:h-auto [&_select]:w-auto [&_select]:border-0 [&_select]:bg-transparent [&_select]:py-0 [&_select]:pr-6 [&_select]:pl-0 [&_select]:text-2xl [&_select]:font-semibold [&_select]:text-slate-900 [&_select]:focus-visible:border-transparent [&_select]:focus-visible:ring-0 [&_svg]:right-0 [&_svg]:size-5 [&_svg]:text-slate-500"
+          className="shrink-0 [&_select]:h-10 [&_select]:w-auto [&_select]:border-none [&_select]:bg-slate-200/50 dark:[&_select]:bg-slate-800/50 [&_select]:rounded-full [&_select]:px-4 [&_select]:text-sm [&_select]:font-bold [&_select]:focus-visible:ring-0 [&_svg]:right-2 [&_svg]:size-4"
           onChange={(e) => {
             const token = options.find(
               (t) => t.symbol.toLowerCase() === e.target.value.toLowerCase(),
             );
-            console.log(token);
             if (token) onTokenChange(token);
           }}
         >
@@ -77,12 +80,6 @@ function SwapSection({
             </NativeSelectOption>
           ))}
         </NativeSelect>
-      </div>
-
-      <div className="flex items-center justify-end text-[1.05rem] text-slate-600">
-        <span>
-          {balance} {selectedToken.symbol.toLowerCase()}
-        </span>
       </div>
     </div>
   );
@@ -168,42 +165,41 @@ export default function SwapPage() {
   }, [provider, wallet, sellToken, buyToken]);
 
   return (
-    <Card className="mx-auto w-full max-w-xl rounded-[32px] py-0">
-      <CardContent className="p-3">
-        <div className="relative">
-          <div className="space-y-1.5">
-            <SwapSection
-              label="Sell"
-              selectedToken={sellToken}
-              balance={walletBalance.balanceA}
-              onTokenChange={setSellToken}
-              options={sellOptions}
-              amount={sellAmount}
-              onAmountChange={setSellAmount}
-            />
-            <SwapSection
-              label="Buy"
-              selectedToken={buyToken}
-              balance={walletBalance.balanceB}
-              onTokenChange={setBuyToken}
-              options={buyOptions}
-              amount={buyAmount}
-              onAmountChange={setBuyAmount}
-            />
-          </div>
-
-          <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-center">
+    <Card className="w-full border-none shadow-xl bg-white dark:bg-slate-950 rounded-[24px]">
+      <CardContent className="p-2 flex flex-col gap-1">
+        <div className="relative flex flex-col gap-1">
+          <SwapSection
+            label="You pay"
+            selectedToken={sellToken}
+            balance={walletBalance.balanceA}
+            onTokenChange={setSellToken}
+            options={sellOptions}
+            amount={sellAmount}
+            onAmountChange={setSellAmount}
+          />
+          
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
             <button
               onClick={handleSwitchTokens}
-              className="group flex size-14 items-center justify-center rounded-2xl border border-black/5 bg-[#f3f3f4] text-slate-900 shadow-sm transition-all hover:bg-white active:scale-95"
+              className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-md hover:scale-110 transition-transform group"
             >
-              <ArrowDown className="size-7 transition-transform" />
+              <ArrowDown className="size-4 text-slate-600 dark:text-slate-400 group-hover:text-primary transition-colors" />
             </button>
           </div>
+
+          <SwapSection
+            label="You receive"
+            selectedToken={buyToken}
+            balance={walletBalance.balanceB}
+            onTokenChange={setBuyToken}
+            options={buyOptions}
+            amount={buyAmount}
+            onAmountChange={setBuyAmount}
+          />
         </div>
 
         <Button
-          className="mt-1.5 h-16 w-full rounded-[24px] bg-[#ff38c7] text-[1.15rem] font-semibold text-white shadow-none hover:bg-[#f429bc]"
+          className="w-full h-14 mt-1 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg shadow-lg shadow-primary/20"
           onClick={handleSwapClick}
         >
           Swap

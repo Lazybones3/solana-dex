@@ -125,7 +125,15 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-slate-50 text-foreground dark:bg-slate-950;
+    background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                      radial-gradient(at 50% 0%, hsla(225,39%,30%,0.1) 0, transparent 50%), 
+                      radial-gradient(at 100% 0%, hsla(339,49%,30%,0.1) 0, transparent 50%);
+  }
+  .dark body {
+    background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                      radial-gradient(at 50% 0%, hsla(225,39%,30%,0.2) 0, transparent 50%), 
+                      radial-gradient(at 100% 0%, hsla(339,49%,30%,0.2) 0, transparent 50%);
   }
   html {
     @apply font-sans;
