@@ -10,6 +10,7 @@ import {
 import { LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
 
 import ammIdl from "@/idl/amm.json";
+import { tokenList } from "./constants";
 
 export const AMM_PROGRAM_ID = new PublicKey(ammIdl.address);
 
@@ -314,9 +315,33 @@ export async function getPayerBalance(
     const accountInfo = await getAccount(connection, ata);
 
     // 3. Return the amount as a formatted string with 2 decimal places
-    return (Number(accountInfo.amount) / LAMPORTS_PER_SOL).toFixed(2);
+    const decimals = tokenList.find((token) => token.mint === mintAddress)?.decimals || 9;
+    return (Number(accountInfo.amount) / (10 ** decimals)).toFixed(2);
   } catch (e) {
     // If the account doesn't exist, the balance is 0
     return 0;
   }
+}
+
+export async function getPayerAmount(
+  provider: AnchorProvider,
+  payer: PublicKey,
+  input: {
+    mintA: string;
+    mintB: string;
+  }
+) {
+  const mintA = parsePublicKey(input.mintA);
+  const mintB = parsePublicKey(input.mintB);
+  const payerA = getAssociatedTokenAddressSync(mintA, payer);
+  const payerB = getAssociatedTokenAddressSync(mintB, payer);
+  const connection = provider.connection;
+  const accountA = await getAccount(connection, payerA);
+  const accountB = await getAccount(connection, payerB);
+  const decimalsA = tokenList.find((token) => token.mint === input.mintA)?.decimals || 9;
+  const decimalsB = tokenList.find((token) => token.mint === input.mintB)?.decimals || 9;
+  return {
+    amountA: (Number(accountA.amount) / (10 ** decimalsA)).toFixed(2),
+    amountB: (Number(accountB.amount) / (10 ** decimalsB)).toFixed(2),
+  };
 }

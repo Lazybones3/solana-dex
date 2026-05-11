@@ -6,7 +6,7 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
-import { getPayerBalance, getWalletInfo, sendSwap } from "@/lib/amm-client";
+import { getPayerAmount, getPayerBalance, getWalletInfo, sendSwap } from "@/lib/amm-client";
 import { defaultFee, tokenList } from "@/lib/constants";
 import { AnchorProvider } from "@coral-xyz/anchor";
 import { useAnchorWallet, useConnection } from "@solana/wallet-adapter-react";
@@ -132,6 +132,9 @@ export default function SwapPage() {
         fee: defaultFee.toString(),
       });
       toast.success("Swap successful!");
+      setSellAmount(0);
+      setBuyAmount(0);
+      await loadWallet();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Unknown swap error.",
@@ -151,12 +154,14 @@ export default function SwapPage() {
     if (!provider || !wallet) {
       return;
     }
-    const sellBalance = await getPayerBalance(provider, wallet.publicKey, sellToken.mint!);
-    const buyBalance = await getPayerBalance(provider, wallet.publicKey, buyToken.mint!);
+    const balance = await getPayerAmount(provider, wallet.publicKey, {
+      mintA: sellToken.mint!,
+      mintB: buyToken.mint!,
+    });
 
     setWalletBalance({
-      balanceA: Number(sellBalance),
-      balanceB: Number(buyBalance),
+      balanceA: Number(balance.amountA),
+      balanceB: Number(balance.amountB),
     });
   }
 
